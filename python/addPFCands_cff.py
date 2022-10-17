@@ -8,7 +8,7 @@ def addPFCands(process):
 
     process.customConstituentsExtTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
                                                         src = candInput,
-                                                        cut = cms.string(""), 
+                                                        cut = cms.string("pt > 1 && hasTrackDetails() && fromPV()>=1 && eta <= 2.5 && eta >= -2.5"), 
                                                         name = cms.string("PFCands"),
                                                         doc = cms.string("PF candidates"),
                                                         singleton = cms.bool(False), 
@@ -26,15 +26,18 @@ def addPFCands(process):
                                                             pvAssocQuality = Var("pvAssociationQuality()", int, doc="primary vertex association quality"),
                                                             lostInnerHits = Var("lostInnerHits()", int, doc="lost inner hits"),
                                                             trkQuality = Var("?hasTrackDetails()?pseudoTrack().qualityMask():0", int, doc="track quality mask"),
-                                                            trkPt = Var("?hasTrackDetails()?sqrt(pseudoTrack().momentum().Perp2()):0", float, doc="track transverse momentum", precision=10),
-                                                            trkEta = Var("?hasTrackDetails()?pseudoTrack().momentum().Eta():-99", float, doc="track pseudorapidity", precision=10),
-                                                            trkPhi = Var("?hasTrackDetails()?pseudoTrack().momentum().Phi():-99", float, doc="track azimuthal angle", precision=10),
+                                                            trkPt = Var("?hasTrackDetails()?sqrt(pseudoTrack().momentum().Perp2()):pt()", float, doc="track transverse momentum (or transverse momentum if there is info and no track)", precision=10),
+                                                            trkEta = Var("?hasTrackDetails()?pseudoTrack().momentum().Eta():eta()", float, doc="track pseudorapidity (or eta if there is info and no track)", precision=10),
+                                                            trkPhi = Var("?hasTrackDetails()?pseudoTrack().momentum().Phi():phi()", float, doc="track azimuthal angle (or phi if there is info and no track)", precision=10),
+                                                            time = Var("dtimeAssociatedPV()", float, doc="time with respect to the vertex timing", precision=10),
+                                                            timeErr = Var("timeError()", float, doc="Error in time measurement", precision=10),
+                                                            pfcandflavor = Var("isElectron()+2*isMuon()+3*isPhoton()+4*isJet()", int, doc="PF flavour mask, 1 = el, 2=mu, 3=pho, 4=jet"),
                                                         )
                                             )
 
     process.customIsolatedTracksTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
                                                         src = cms.InputTag("isolatedTracks"),
-                                                        cut = cms.string(""),
+                                                        cut = cms.string("pt > 1 && fromPV() >= 1 && eta <= 2.5 && eta >= -2.5"),
                                                         name = cms.string("isolatedTracks"),
                                                         doc = cms.string("isolated Tracks"),
                                                         singleton = cms.bool(False),
@@ -59,7 +62,7 @@ def addPFCands(process):
 
     process.customLostTracksTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
                                                         src = cms.InputTag("lostTracks"),
-                                                        cut = cms.string(""),
+                                                        cut = cms.string("pt > 1 && hasTrackDetails() && fromPV() >= 1 && eta <= 2.5 && eta >= -2.5"),
                                                         name = cms.string("lostTracks"),
                                                         doc = cms.string("lost Tracks"),
                                                         singleton = cms.bool(False),

@@ -2,12 +2,27 @@
 # using: 
 # Revision: 1.19 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: step1 --filein file:XXX.root --fileout file:YYY.root --mc --eventcontent NANOAODSIM --datatier NANOAODSIM --conditions 102X_upgrade2018_realistic_v21 --step NANO --nThreads 1 --era Run2_2018,run2_nanoAOD_102Xv1 --python_filename autumn18_mc_NANO.py --no_exec --customise PhysicsTools/SUEPNano/nano_suep_cff.SUEPNano_customize -n -1
+# with command line options: --python_filename nano17.py --eventcontent NANOAODSIM --customise Configuration/DataProcessing/Utils.addMonitoring --datatier NANOAODSIM --fileout options.outputFile --conditions 106X_mc2017_realistic_v9 --step NANO --filein options.inputFiles --era Run2_2017,run2_nanoAOD_106Xv2 --no_exec --mc -n -1 --customise PhysicsTools/SUEPNano/nano_suep_cff.SUEPNano_customize
 import FWCore.ParameterSet.Config as cms
 
-from Configuration.StandardSequences.Eras import eras
 
-process = cms.Process('NANO',eras.Run2_2018,eras.run2_nanoAOD_102Xv1)
+import FWCore.ParameterSet.VarParsing as VarParsing
+
+# setup 'analysis'  options
+options = VarParsing.VarParsing ('analysis')
+
+# setup any defaults you want
+options.outputFile = 'output.root'
+options.inputFiles = ['input.root']
+options.maxEvents = -1 # -1 means all events
+options.parseArguments()
+
+
+
+from Configuration.Eras.Era_Run2_2017_cff import Run2_2017
+from Configuration.Eras.Modifier_run2_nanoAOD_106Xv2_cff import run2_nanoAOD_106Xv2
+
+process = cms.Process('NANO',Run2_2017,run2_nanoAOD_106Xv2)
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
@@ -27,7 +42,7 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input source
 process.source = cms.Source("PoolSource",
-    fileNames = cms.untracked.vstring('file:XXX.root'),
+    fileNames = cms.untracked.vstring(options.inputFiles),
     secondaryFileNames = cms.untracked.vstring()
 )
 
@@ -37,7 +52,7 @@ process.options = cms.untracked.PSet(
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
-    annotation = cms.untracked.string('step1 nevts:-1'),
+    annotation = cms.untracked.string('--python_filename nevts:-1'),
     name = cms.untracked.string('Applications'),
     version = cms.untracked.string('$Revision: 1.19 $')
 )
@@ -51,15 +66,24 @@ process.NANOAODSIMoutput = cms.OutputModule("NanoAODOutputModule",
         dataTier = cms.untracked.string('NANOAODSIM'),
         filterName = cms.untracked.string('')
     ),
-    fileName = cms.untracked.string('file:YYY.root'),
-    outputCommands = process.NANOAODSIMEventContent.outputCommands
+    fileName = cms.untracked.string(options.outputFile),
+    outputCommands = process.NANOAODSIMEventContent.outputCommands,
+    SelectEvents = cms.untracked.PSet(
+      SelectEvents = cms.vstring('skim_step')
+    )
 )
 
 # Additional output definition
 
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '102X_upgrade2018_realistic_v21', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '106X_mc2017_realistic_v9', '')
+
+# Standalone for actual event skimming
+process.load("PhysicsTools.SUEPNano.skim_cff")
+process.skim_step = cms.Path(process.ZS_skim)
+# And also at the start of the nano not to run code that we don't need
+#process.nanoSequenceMC.insert(0, process.ZS_skim)
 
 # Path and EndPath definitions
 process.nanoAOD_step = cms.Path(process.nanoSequenceMC)
@@ -67,7 +91,7 @@ process.endjob_step = cms.EndPath(process.endOfProcess)
 process.NANOAODSIMoutput_step = cms.EndPath(process.NANOAODSIMoutput)
 
 # Schedule definition
-process.schedule = cms.Schedule(process.nanoAOD_step,process.endjob_step,process.NANOAODSIMoutput_step)
+process.schedule = cms.Schedule(process.skim_step,process.nanoAOD_step,process.endjob_step,process.NANOAODSIMoutput_step)
 from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
 associatePatAlgosToolsTask(process)
 
@@ -78,6 +102,12 @@ from PhysicsTools.NanoAOD.nano_cff import nanoAOD_customizeMC
 
 #call to customisation function nanoAOD_customizeMC imported from PhysicsTools.NanoAOD.nano_cff
 process = nanoAOD_customizeMC(process)
+
+# Automatic addition of the customisation function from Configuration.DataProcessing.Utils
+from Configuration.DataProcessing.Utils import addMonitoring 
+
+#call to customisation function addMonitoring imported from Configuration.DataProcessing.Utils
+process = addMonitoring(process)
 
 # Automatic addition of the customisation function from PhysicsTools.SUEPNano.nano_suep_cff
 from PhysicsTools.SUEPNano.nano_suep_cff import SUEPNano_customize 

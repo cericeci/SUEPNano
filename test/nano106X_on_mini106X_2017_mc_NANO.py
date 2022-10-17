@@ -22,7 +22,7 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(10)
+    input = cms.untracked.int32(-1)
 )
 
 # Input source
@@ -52,7 +52,10 @@ process.NANOAODSIMoutput = cms.OutputModule("NanoAODOutputModule",
         filterName = cms.untracked.string('')
     ),
     fileName = cms.untracked.string('nano106X_on_mini106X_2017_mc_NANO.root'),
-    outputCommands = process.NANOAODSIMEventContent.outputCommands
+    outputCommands = process.NANOAODSIMEventContent.outputCommands,
+    SelectEvents = cms.untracked.PSet(
+      SelectEvents = cms.vstring('skim_step')
+    )
 )
 
 # Additional output definition
@@ -61,13 +64,19 @@ process.NANOAODSIMoutput = cms.OutputModule("NanoAODOutputModule",
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, '106X_mc2017_realistic_v6', '')
 
+# Standalone for actual event skimming
+process.load("PhysicsTools.SUEPNano.skim_cff")
+process.skim_step = cms.Path(process.ZS_skim)
+# And also at the start of the nano not to run code that we don't need
+process.nanoSequenceMC.insert(0, process.ZS_skim)
+
 # Path and EndPath definitions
 process.nanoAOD_step = cms.Path(process.nanoSequenceMC)
 process.endjob_step = cms.EndPath(process.endOfProcess)
 process.NANOAODSIMoutput_step = cms.EndPath(process.NANOAODSIMoutput)
 
 # Schedule definition
-process.schedule = cms.Schedule(process.nanoAOD_step,process.endjob_step,process.NANOAODSIMoutput_step)
+process.schedule = cms.Schedule(process.skim_step,process.nanoAOD_step,process.endjob_step,process.NANOAODSIMoutput_step)
 from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
 associatePatAlgosToolsTask(process)
 
