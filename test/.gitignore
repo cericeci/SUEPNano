@@ -2,3 +2,7 @@ exec*
 batch*
 crab_*
 .__*
+*pyc
+*sub
+*log
+*cc
