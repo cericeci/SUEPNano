@@ -13,7 +13,7 @@ NumberOfJobs= 60 # number of jobs to be submitted
 interval = 1 # number files to be processed in a single job, take care to split your file so that you run on all files. The last job might be with smaller number of files (the ones that remain).
 OutputFileNames = sys.argv[1]                         # base of the output file name, they will be saved in res directory
 FileList     = sys.argv[2]                            # list with all the file directoriequeue = "workday" 
-queue = "tomorrow" 
+queue = "testmatch" 
 OutputDir    = sys.argv[3] 
 tag          = sys.argv[4]
 NumberOfJobs = int(sys.argv[5])
@@ -49,7 +49,7 @@ for x in range(1, int(NumberOfJobs)+1):
     ##### creates directory and file list for job #######
     jobFiles = files[max(0,(x-1)*interval):min(x*interval, len(files))]
     ##### creates jobs #######
-    #print(FullOutputDir+OutputFileNames+"_"+str(x)+".root")
+    print(FullOutputDir+OutputFileNames+"_"+str(x)+".root")
     if os.path.isfile(FullOutputDir+OutputFileNames+"_"+str(x)+".root"):
         print("File exists, skip: "+ FullOutputDir+OutputFileNames+"_"+str(x)+".root")
         continue
@@ -89,6 +89,7 @@ with open('submit.sub', 'w') as fout:
     fout.write("error                   = batchlogs%s/$(ClusterId).$(ProcId).err\n"%tag)
     fout.write("log                     = batchlogs%s/$(ClusterId).log\n"%tag)
     fout.write("Proxy_path              = /afs/cern.ch/user/c/cericeci/private/x509up_u88688\n")
+    fout.write("transfer_output_files   = \"\"\n")
     fout.write('+JobFlavour = "%s"\n' %(queue))
     fout.write("\n")
     fout.write("queue filename matching (exec%s/job_*sh)\n"%tag)

@@ -9,27 +9,23 @@ print 'START'
 print 
 ########   YOU ONLY NEED TO FILL THE AREA BELOW   #########
 ########   customization  area #########
-NumberOfJobs= 60 # number of jobs to be submitted
 interval = 1 # number files to be processed in a single job, take care to split your file so that you run on all files. The last job might be with smaller number of files (the ones that remain).
-OutputFileNames = sys.argv[1]                         # base of the output file name, they will be saved in res directory
-FileList     = sys.argv[2]                            # list with all the file directoriequeue = "workday" 
-queue = "tomorrow" 
-OutputDir    = sys.argv[3] 
-tag          = sys.argv[4]
-NumberOfJobs = int(sys.argv[5])
-interval     = int(sys.argv[6])
-year         = sys.argv[7]
+FileList        = sys.argv[1]                            # list with all the file directoriequeue = "workday" 
+queue           = sys.argv[2] 
+tag             = sys.argv[3]
+NumberOfJobs    = int(sys.argv[4])
+interval        = int(sys.argv[5])
+year            = sys.argv[6]
 ScriptName = "./nano%s.py"%year
 extraIsData  = ""
-if len(sys.argv) > 8: # Then it is data
-  dataPD = sys.argv[8]
+if len(sys.argv) > 7: # Then it is data
+  dataPD = sys.argv[7]
   extraIsData = "-d --pd %s"%dataPD
 if extraIsData != "":
   ScriptName = "./nano%s_data.py"%year 
 ########   customization end   #########
 tag = tag + year
 path = os.getcwd()
-FullOutputDir = "%s/"%(OutputDir)
 print
 print 'do not worry about folder creation:'
 os.system("rm -rf tmp%s"%tag)
@@ -37,7 +33,6 @@ os.system("rm -rf exec%s"%tag)
 os.system("rm -rf batchlogs%s"%tag)
 os.system("mkdir tmp%s"%tag)
 os.system("mkdir exec%s"%tag)
-os.system("mkdir %s" %FullOutputDir)
 print
 
 files = open(FileList,"r").readlines()
@@ -50,11 +45,9 @@ for x in range(1, int(NumberOfJobs)+1):
     jobFiles = files[max(0,(x-1)*interval):min(x*interval, len(files))]
     ##### creates jobs #######
     #print(FullOutputDir+OutputFileNames+"_"+str(x)+".root")
-    if os.path.isfile(FullOutputDir+OutputFileNames+"_"+str(x)+".root"):
-        print("File exists, skip: "+ FullOutputDir+OutputFileNames+"_"+str(x)+".root")
-        continue
+    if len(jobFiles) < 1: continue
     with open('exec%s/job_'%tag+str(x)+'.sh', 'w') as fout:
-        if len(jobFiles) < 1: continue 
+        jobFiles = jobFiles[0].split(":") 
         fout.write("#!/bin/sh\n")
         fout.write("export X509_USER_PROXY=$1\n")
         fout.write("voms-proxy-info -all\n")
@@ -69,14 +62,12 @@ for x in range(1, int(NumberOfJobs)+1):
         fout.write("cmsenv\n")
         fout.write("cd -\n")
         #fout.write("cmsRun /afs/cern.ch/work/c/cericeci/private/SUEP/CMSSW_10_6_26/src/PhysicsTools/SUEPNano/test/"+ScriptName+ " inputFiles=" + ",".join(jobFiles) + " outputFile='"+OutputFileNames+"_"+str(x)+".root'\n") 
-        fout.write("python /afs/cern.ch/work/c/cericeci/private/SUEP/CMSSW_10_6_26/src/PhysicsTools/NanoAODTools/local/runLocalFile.py -c /afs/cern.ch/work/c/cericeci/private/SUEP/CMSSW_10_6_26/src/PhysicsTools/NanoAODTools/python/postprocessing/modules/SUEP/SUEPpostProcessorHLT_20%s.py "%(year) + extraIsData + " -f root://cmsxrootd.fnal.gov//%s\n"%jobFiles[0])
-        fout.write("mv *Skim.root " + FullOutputDir + "/" + OutputFileNames+"_"+str(x)+".root\n")
+        fout.write("python /afs/cern.ch/work/c/cericeci/private/SUEP/CMSSW_10_6_26/src/PhysicsTools/NanoAODTools/local/runLocalFile.py -c /afs/cern.ch/work/c/cericeci/private/SUEP/CMSSW_10_6_26/src/PhysicsTools/NanoAODTools/python/postprocessing/modules/SUEP/SUEPpostProcessor_20%s.py "%(year) + extraIsData + " -f %s\n"%jobFiles[0])
+        fout.write("mv *Skim.root %s\n"%jobFiles[1])
         fout.write("echo 'STOP---------------'\n")
         fout.write("echo\n")
         fout.write("echo\n")
     os.system("chmod 755 exec%s/job_"%tag+str(x)+".sh")
-    if os.path.isfile(FullOutputDir + "/" + OutputFileNames+"_"+str(x)+".root"):
-        os.system("rm exec%s/job_"%tag+str(x)+".sh")
     
 ###### create submit.sub file ####
     
@@ -94,7 +85,7 @@ with open('submit.sub', 'w') as fout:
     
 ###### sends bjobs ######
 os.system("echo submit.sub")
-#os.system("condor_submit submit.sub")
+os.system("condor_submit submit.sub")
   
 print
 print "your jobs:"
