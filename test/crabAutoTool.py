@@ -14,7 +14,7 @@ def sendMailTo(main, error=False): #, sample, status):
     curDate=(time.strftime("%d/%m/%Y"))
 
     fromaddr = "CRAB Auto-Tool"
-    userlist = ["cericeci"]
+    userlist = [user]
     for u in userlist:
       toaddr = u+"@cern.ch"
       msg = MIMEMultipart()
