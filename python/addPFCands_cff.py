@@ -6,9 +6,9 @@ def addPFCands(process):
     process.schedule.associate(process.customizedPFCandsTask)
     candInput = cms.InputTag("packedPFCandidates")
 
-    process.customConstituentsExtTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
+    process.customConstituentsExtTable = cms.EDProducer("SimplePATCandidateFlatTableProducer",
                                                         src = candInput,
-                                                        cut = cms.string("pt > 1 && hasTrackDetails() && fromPV()>=1 && eta <= 2.5 && eta >= -2.5"), 
+                                                        cut = cms.string("pt > 1 && hasTrackDetails() && fromPV()>1 && eta <= 2.5 && eta >= -2.5 && dz() <= 0.05 && dz() >= -0.05 && dxy() <= 0.05 && dxy() >= -0.05 && puppiWeight() > 0.1"), 
                                                         name = cms.string("PFCands"),
                                                         doc = cms.string("PF candidates"),
                                                         singleton = cms.bool(False), 
@@ -34,35 +34,9 @@ def addPFCands(process):
                                                             pfcandflavor = Var("isElectron()+2*isMuon()+3*isPhoton()+4*isJet()", int, doc="PF flavour mask, 1 = el, 2=mu, 3=pho, 4=jet"),
                                                         )
                                             )
-
-    process.customIsolatedTracksTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
-                                                        src = cms.InputTag("isolatedTracks"),
-                                                        cut = cms.string("pt > 1 && fromPV() >= 1 && eta <= 2.5 && eta >= -2.5"),
-                                                        name = cms.string("isolatedTracks"),
-                                                        doc = cms.string("isolated Tracks"),
-                                                        singleton = cms.bool(False),
-                                                        extension = cms.bool(False),
-                                                        variables = cms.PSet(P3Vars,
-                                                            dz = Var("dz",float,doc="dz (with sign) wrt first PV, in cm",precision=10),
-                                                            dzErr = Var("dzError",float,doc="dz error wrt first PV, in cm",precision=10),
-                                                            d0 = Var("dxy",float,doc="dxy (with sign) wrt first PV, in cm",precision=10),
-                                                            d0Err = Var("dxyError",float,doc="dxy error wrt first PV, in cm",precision=10),
-                                                            vtxChi2 = Var("vertexChi2", float, doc="vertex chi2",precision=10),
-                                                            pfRelIso03_chg = Var("pfIsolationDR03().chargedHadronIso/pt",float,doc="PF relative isolation dR=0.3, charged component",precision=10),
-                                                            pfRelIso03_all = Var("(pfIsolationDR03().chargedHadronIso + max(pfIsolationDR03().neutralHadronIso + pfIsolationDR03().photonIso - pfIsolationDR03().puChargedHadronIso/2,0.0))/pt",float,doc="PF relative isolation dR=0.3, total (deltaBeta corrections)",precision=10),
-                                                            isPFcand = Var("packedCandRef().isNonnull()",bool,doc="if isolated track is a PF candidate"),
-                                                            fromPV = Var("fromPV", int, doc="isolated track comes from PV"),
-                                                            pdgId = Var("pdgId",int,doc="PDG id of PF cand"),
-                                                            isHighPurityTrack = Var("isHighPurityTrack",bool,doc="track is high purity"),
-                                                            charge = Var("charge", int, doc="electric charge"),
-                                                            isTightTrack = Var("isTightTrack", bool, doc="If track is tight yo"),
-                                                            isLooseTrack = Var("isLooseTrack", int, doc="If track is loose"),
-                                                        )
-                                            )
-
-    process.customLostTracksTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
+    process.customLostTracksTable = cms.EDProducer("SimplePATCandidateFlatTableProducer",
                                                         src = cms.InputTag("lostTracks"),
-                                                        cut = cms.string("pt > 1 && hasTrackDetails() && fromPV() >= 1 && eta <= 2.5 && eta >= -2.5"),
+                                                        cut = cms.string("pt > 1 && hasTrackDetails() && fromPV() >= 1 && eta <= 2.5 && eta >= -2.5 && dz() <= 0.05 && dz() >= -0.05 && dxy() <= 0.05 && dxy() >= -0.05 && puppiWeight() > 0.1"),
                                                         name = cms.string("lostTracks"),
                                                         doc = cms.string("lost Tracks"),
                                                         singleton = cms.bool(False),
@@ -86,7 +60,7 @@ def addPFCands(process):
 
 
     process.customizedPFCandsTask.add(process.customConstituentsExtTable)
-    process.customizedPFCandsTask.add(process.customIsolatedTracksTable)
+    #process.customizedPFCandsTask.add(process.customIsolatedTracksTable)
     process.customizedPFCandsTask.add(process.customLostTracksTable)
 
     return process
