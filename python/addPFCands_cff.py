@@ -6,9 +6,9 @@ def addPFCands(process):
     process.schedule.associate(process.customizedPFCandsTask)
     candInput = cms.InputTag("packedPFCandidates")
 
-    process.customConstituentsExtTable = cms.EDProducer("SimplePATCandidateFlatTableProducer",
+    process.customConstituentsExtTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
                                                         src = candInput,
-                                                        cut = cms.string("pt > 1 && hasTrackDetails() && fromPV()>1 && eta <= 2.5 && eta >= -2.5 && dz() <= 0.05 && dz() >= -0.05 && dxy() <= 0.05 && dxy() >= -0.05 && puppiWeight() > 0.1"), 
+                                                        cut = cms.string("pt > 0.5 && hasTrackDetails() && fromPV()>0"), 
                                                         name = cms.string("PFCands"),
                                                         doc = cms.string("PF candidates"),
                                                         singleton = cms.bool(False), 
@@ -34,9 +34,9 @@ def addPFCands(process):
                                                             pfcandflavor = Var("isElectron()+2*isMuon()+3*isPhoton()+4*isJet()", int, doc="PF flavour mask, 1 = el, 2=mu, 3=pho, 4=jet"),
                                                         )
                                             )
-    process.customLostTracksTable = cms.EDProducer("SimplePATCandidateFlatTableProducer",
+    process.customLostTracksTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
                                                         src = cms.InputTag("lostTracks"),
-                                                        cut = cms.string("pt > 1 && hasTrackDetails() && fromPV() >= 1 && eta <= 2.5 && eta >= -2.5 && dz() <= 0.05 && dz() >= -0.05 && dxy() <= 0.05 && dxy() >= -0.05 && puppiWeight() > 0.1"),
+                                                        cut = cms.string("pt > 0.5 && hasTrackDetails() && fromPV() >0"),
                                                         name = cms.string("lostTracks"),
                                                         doc = cms.string("lost Tracks"),
                                                         singleton = cms.bool(False),
@@ -60,7 +60,6 @@ def addPFCands(process):
 
 
     process.customizedPFCandsTask.add(process.customConstituentsExtTable)
-    #process.customizedPFCandsTask.add(process.customIsolatedTracksTable)
     process.customizedPFCandsTask.add(process.customLostTracksTable)
 
     return process
